@@ -1,4 +1,4 @@
-package com.nico.model;
+package com.nico.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,8 +9,9 @@ import java.lang.reflect.Method;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProxyWapper {
+public class BeanWapper {
     private Object bean;
     private Method method;
+    private Class paramType;
 
 }

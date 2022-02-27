@@ -1,8 +1,7 @@
 package com.nico.dispatch;
 
 import com.nico.annotation.Router;
-import com.nico.model.ProxyWapper;
-import io.netty.handler.codec.http.FullHttpRequest;
+import com.nico.common.BeanWapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -11,12 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 @Component
 @Slf4j
@@ -24,16 +20,17 @@ public class HandlerMapping implements CommandLineRunner {
 
     @Autowired
     private ConfigurableApplicationContext ctx;
-    private static final Map<String, ProxyWapper> continer = new HashMap<>();
+    private static final Map<String, BeanWapper> continer = new HashMap<>();
+    private static final Map<String,Class> paramTypeMap = new HashMap<>();
 
 
 
     public void handlerMapping() {
         try {
-            String[] beanNamesForAnnotation = ctx.getBeanNamesForAnnotation(Controller.class);
+            String[] beanNames = ctx.getBeanNamesForAnnotation(Controller.class);
 
-            for (String s : beanNamesForAnnotation) {
-                Object bean = ctx.getBean(s);
+            for (String beanName : beanNames) {
+                Object bean = ctx.getBean(beanName);
                 Class<?> clazz = bean.getClass();
                 Controller annotation = clazz.getAnnotation(Controller.class);
                 if (annotation == null) {
@@ -48,8 +45,15 @@ public class HandlerMapping implements CommandLineRunner {
                         if (ann.annotationType().getName().equals(Router.class.getName())) {
                             Router router = (Router) ann;
                             String name = router.name();
-                            log.info("key = {}",controllerValue + name);
-                            continer.put(controllerValue + name, new ProxyWapper(bean,method));
+                            String url = controllerValue + name;
+                            log.info("url = {}",url);
+                            Class<?>[] parameterTypes = method.getParameterTypes();
+                            if(parameterTypes.length > 0){
+                                continer.put(url, new BeanWapper(bean,method,parameterTypes[0]));
+                            }else {
+                                continer.put(url, new BeanWapper(bean,method,null));
+                            }
+
                             break;
                         }
                     }
@@ -62,17 +66,8 @@ public class HandlerMapping implements CommandLineRunner {
     }
 
 
-    private Object proxy(Object bean,Method method,Object args){
-        Object invoke = null;
-        try {
-            invoke = method.invoke(bean, args);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return invoke;
-    }
 
-    public ProxyWapper get(String uri) {
+    public BeanWapper get(String uri) {
         return continer.get(uri);
     }
 

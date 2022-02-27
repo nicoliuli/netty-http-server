@@ -1,5 +1,6 @@
 package com.nico.net;
 
+import com.nico.common.RespWapper;
 import com.nico.dispatch.Dispatcher;
 import com.nico.net.config.NettyConfig;
 import io.netty.buffer.ByteBuf;
@@ -104,17 +105,19 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req,
                                   DefaultFullHttpResponse resp) {
-        dispatcher.dispatch(req);
-        if (resp.status().code() != HttpResponseStatus.OK.code()) {
-            ByteBuf buf = Unpooled.copiedBuffer(resp.status().toString(), CharsetUtil.UTF_8);
+        RespWapper respWapper = dispatcher.dispatch(req);
+
+        if (respWapper.getStatus().code() != HttpResponseStatus.OK.code()) {
+            ByteBuf buf = Unpooled.copiedBuffer(respWapper.getStatus().toString(), CharsetUtil.UTF_8);
             resp.content().writeBytes(buf);
             buf.release();
+            return;
         }
-		if(resp.status().code() == HttpResponseStatus.OK.code()){
-            ByteBuf buf = Unpooled.copiedBuffer(req.content().toString(CharsetUtil.UTF_8),CharsetUtil.UTF_8);
-			resp.content().writeBytes(buf);
-			buf.release();
-		}
+
+        ByteBuf buf = Unpooled.copiedBuffer(respWapper.getRespBody(),CharsetUtil.UTF_8);
+        resp.content().writeBytes(buf);
+        buf.release();
+
         ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
 
     }
