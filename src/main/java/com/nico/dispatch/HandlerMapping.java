@@ -4,6 +4,7 @@ import com.nico.annotation.Router;
 import com.nico.common.BeanWapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
@@ -20,9 +21,9 @@ public class HandlerMapping implements CommandLineRunner {
 
     @Autowired
     private ConfigurableApplicationContext ctx;
+    @Value("${server.servlet.context-path}")
+    private String path;
     private static final Map<String, BeanWapper> continer = new HashMap<>();
-    private static final Map<String,Class> paramTypeMap = new HashMap<>();
-
 
 
     public void handlerMapping() {
@@ -45,13 +46,13 @@ public class HandlerMapping implements CommandLineRunner {
                         if (ann.annotationType().getName().equals(Router.class.getName())) {
                             Router router = (Router) ann;
                             String name = router.name();
-                            String url = controllerValue + name;
-                            log.info("url = {}",url);
+                            String url = path + controllerValue + name;
+                            log.info("url = {}", url);
                             Class<?>[] parameterTypes = method.getParameterTypes();
-                            if(parameterTypes.length > 0){
-                                continer.put(url, new BeanWapper(bean,method,parameterTypes[0]));
-                            }else {
-                                continer.put(url, new BeanWapper(bean,method,null));
+                            if (parameterTypes.length > 0) {
+                                continer.put(url, new BeanWapper(bean, method, parameterTypes[0]));
+                            } else {
+                                continer.put(url, new BeanWapper(bean, method, null));
                             }
 
                             break;
@@ -60,11 +61,10 @@ public class HandlerMapping implements CommandLineRunner {
                 }
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
     }
-
 
 
     public BeanWapper get(String uri) {

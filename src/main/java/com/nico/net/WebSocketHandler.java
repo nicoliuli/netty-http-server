@@ -2,7 +2,7 @@ package com.nico.net;
 
 import com.nico.common.RespWapper;
 import com.nico.dispatch.Dispatcher;
-import com.nico.net.config.NettyConfig;
+import com.nico.net.config.ChannelUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Map;
 
 /**
  * 接收/处理/响应客户端websocket请求的核心业务处理类
@@ -35,14 +34,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        NettyConfig.group.add(ctx.channel());
-        log.info("connect channelId = {}",ctx.channel().id());
+        ChannelUtil.group.add(ctx.channel());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        NettyConfig.group.remove(ctx.channel());
-        log.info("disconnect channelId = {}",ctx.channel().id());
+        ChannelUtil.group.remove(ctx.channel());
     }
 
     @Override
@@ -85,13 +82,13 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         //群发，服务端向每个连接上来的客户端群发消息
         //	NettyConfig.group.writeAndFlush(tws);
         //给一会话的用户发送消息
-        Channel channel = NettyConfig.group.find(ctx.channel().id());
+        Channel channel = ChannelUtil.group.find(ctx.channel().id());
         channel.writeAndFlush(tws);
     }
 
     private void handHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
         if (!req.decoderResult().isSuccess() || !("websocket".equals(req.headers().get("Upgrade")))) {
-			sendHttpResponse(ctx, req,new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK));
+            sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK));
             return;
         }
         WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(WEB_SOCKET_URL, null, false);
@@ -111,13 +108,11 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             ByteBuf buf = Unpooled.copiedBuffer(respWapper.getStatus().toString(), CharsetUtil.UTF_8);
             resp.content().writeBytes(buf);
             buf.release();
-            return;
+        } else {
+            ByteBuf buf = Unpooled.copiedBuffer(respWapper.getRespBody(), CharsetUtil.UTF_8);
+            resp.content().writeBytes(buf);
+            buf.release();
         }
-
-        ByteBuf buf = Unpooled.copiedBuffer(respWapper.getRespBody(),CharsetUtil.UTF_8);
-        resp.content().writeBytes(buf);
-        buf.release();
-
         ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
 
     }

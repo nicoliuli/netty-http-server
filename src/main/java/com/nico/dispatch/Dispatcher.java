@@ -2,6 +2,7 @@ package com.nico.dispatch;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.nico.common.BeanWapper;
 import com.nico.common.RespWapper;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -30,15 +31,9 @@ public class Dispatcher {
 
 
         HttpMethod reqMethod = req.method();
-        String content = "";
-        log.info("method = {}", reqMethod.name());
-        if ("POST".equals(reqMethod.name())) {
-            content = req.content().toString(CharsetUtil.UTF_8);
-            log.info("content = {}", content);
-        }
+        String content = req.content().toString(CharsetUtil.UTF_8);
+        log.info("method = {} content = {},uri = {}", reqMethod.name(), content,uri);
 
-
-        log.info("uri = {}", uri);
         BeanWapper beanWapper = handlerMapping.get(uri);
         if (beanWapper == null) {
             return new RespWapper(HttpResponseStatus.NOT_FOUND);
@@ -51,17 +46,18 @@ public class Dispatcher {
             if (paramType == null) {
                 ret = method.invoke(bean, null);
             } else {
-                Object param = JSON.parseObject(content, paramType);
-                ret = method.invoke(bean, param);
+                Object reqBody = JSON.parseObject(content, paramType);
+                ret = method.invoke(bean, reqBody);
             }
             log.info("ret = {}", ret);
             if (ret == null) {
                 return new RespWapper(HttpResponseStatus.OK);
             }
-            return new RespWapper(JSON.toJSONString(ret), HttpResponseStatus.OK);
+            return new RespWapper(JSON.toJSONString(ret, SerializerFeature.DisableCircularReferenceDetect), HttpResponseStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
+            return new RespWapper(HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
-        return new RespWapper(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        //return new RespWapper(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
 }
