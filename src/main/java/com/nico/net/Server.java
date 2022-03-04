@@ -8,13 +8,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -30,7 +27,7 @@ public class Server implements CommandLineRunner {
 
 
 	@Autowired
-	private HttpChannelHandler httpChannelHandler;
+	private ChannelHandler channelHandler;
     @Value("${server.port}")
     private Integer port;
     @Value("${server.boss-group-nThreads}")
@@ -46,7 +43,7 @@ public class Server implements CommandLineRunner {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workGroup);
             b.channel(NioServerSocketChannel.class);
-            b.childHandler(httpChannelHandler);
+            b.childHandler(channelHandler);
 
             if(Objects.isNull(port)){
                 port = 8080;

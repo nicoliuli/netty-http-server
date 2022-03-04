@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class HttpChannelHandler extends ChannelInitializer<SocketChannel> {
+public class ChannelHandler extends ChannelInitializer<SocketChannel> {
 	@Autowired
 	private WebSocketHandler webSocketHandler;
 
