@@ -34,8 +34,8 @@ public class UserController {
     public List<User> list() {
         List<User> list = new ArrayList<>();
         User u = new User();
-        u.setName("111");
-        u.setId(1);
+        u.setName("222");
+        u.setId(2);
         list.add(u);
         list.add(u);
         return list;

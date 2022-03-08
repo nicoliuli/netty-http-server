@@ -27,7 +27,7 @@ public class Server implements CommandLineRunner {
 
 
 	@Autowired
-	private ChannelHandler channelHandler;
+	private ChannelHandlerList channelHandlerList;
     @Value("${server.port}")
     private Integer port;
     @Value("${server.boss-group-nThreads}")
@@ -43,7 +43,7 @@ public class Server implements CommandLineRunner {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workGroup);
             b.channel(NioServerSocketChannel.class);
-            b.childHandler(channelHandler);
+            b.childHandler(channelHandlerList);
 
             if(Objects.isNull(port)){
                 port = 8080;

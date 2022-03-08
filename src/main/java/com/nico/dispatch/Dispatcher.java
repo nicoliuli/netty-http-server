@@ -32,7 +32,6 @@ public class Dispatcher {
 
         HttpMethod reqMethod = req.method();
         String content = req.content().toString(CharsetUtil.UTF_8);
-        log.info("method = {} content = {},uri = {}", reqMethod.name(), content,uri);
 
         BeanWapper beanWapper = handlerMapping.get(uri);
         if (beanWapper == null) {
@@ -49,7 +48,6 @@ public class Dispatcher {
                 Object reqBody = JSON.parseObject(content, paramType);
                 ret = method.invoke(bean, reqBody);
             }
-            log.info("ret = {}", ret);
             if (ret == null) {
                 return new RespWapper(HttpResponseStatus.OK);
             }
